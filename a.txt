@@ -1,0 +1,320 @@
+Je vais t'aider à réaliser ce TP sur les vecteurs de rationnels en Java. Commençons par créer les classes demandées.
+
+## Question 8 - Classe Vector
+
+### 8.a - Création de la classe Vector
+
+```java
+public class Vector {
+    private Rational[] elements;
+    private final int dimension;
+
+    // Constructeur
+    public Vector(int dimension) {
+        if (dimension <= 0) {
+            throw new IllegalArgumentException("La dimension doit être positive");
+        }
+        this.dimension = dimension;
+        this.elements = new Rational[dimension];
+        
+        // Initialiser tous les éléments à 0/1 par défaut
+        for (int i = 0; i < dimension; i++) {
+            this.elements[i] = new Rational(0, 1);
+        }
+    }
+
+    // Constructeur avec tableau de Rational
+    public Vector(Rational[] elements) {
+        if (elements == null) {
+            throw new IllegalArgumentException("Le tableau ne peut pas être null");
+        }
+        this.dimension = elements.length;
+        this.elements = new Rational[dimension];
+        
+        // Copie profonde pour éviter les problèmes de référence
+        for (int i = 0; i < dimension; i++) {
+            this.elements[i] = new Rational(elements[i].getNumerator(), 
+                                          elements[i].getDenominator());
+        }
+    }
+}
+```
+
+### 8.b - Méthode toString()
+
+```java
+@Override
+public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("( ");
+    
+    for (int i = 0; i < dimension; i++) {
+        sb.append(elements[i].toString());
+        if (i < dimension - 1) {
+            sb.append(", ");
+        }
+    }
+    
+    sb.append(" )");
+    return sb.toString();
+}
+```
+
+### 8.c - Test de la classe Vector
+
+```java
+public class TestVector {
+    public static void main(String[] args) {
+        // Création d'un vecteur de dimension 2
+        Rational[] rats = {new Rational(1, 2), new Rational(3, 2)};
+        Vector v = new Vector(rats);
+        
+        System.out.println("Vecteur v: " + v);
+        // Devrait afficher: ( 1/2, 3/2 )
+    }
+}
+```
+
+## Question 9 - Accès aux composantes
+
+### 9.a - Méthode set()
+
+```java
+public void set(int i, Rational r) {
+    if (i < 0 || i >= dimension) {
+        throw new IllegalArgumentException("Index " + i + " hors limites [0, " + (dimension-1) + "]");
+    }
+    if (r == null) {
+        throw new IllegalArgumentException("Le rationnel ne peut pas être null");
+    }
+    // Copie profonde pour éviter les problèmes de référence
+    this.elements[i] = new Rational(r.getNumerator(), r.getDenominator());
+}
+```
+
+### 9.b - Programme de test et analyse
+
+```java
+public class TestSet {
+    public static void main(String[] args) {
+        // v ← ⟨0/1, 0/1⟩
+        Vector v = new Vector(2);
+        
+        // a ← 2/3
+        Rational a = new Rational(2, 3);
+        
+        // v₁ ← a (affecte a au premier élément du vecteur)
+        v.set(0, a);
+        
+        // Afficher v
+        System.out.println("v après set(0, a): " + v);
+        
+        // b ← 3/2
+        Rational b = new Rational(3, 2);
+        
+        // a ← a * b (a vaut désormais 3/3 == 1)
+        a.mult(b);
+        
+        // Afficher v
+        System.out.println("v après a.mult(b): " + v);
+    }
+}
+```
+
+**Analyse du problème :** Si vous utilisez une copie superficielle dans `set()`, vous constaterez que modifier `a` après l'avoir utilisé dans `set()` modifie aussi le vecteur. C'est un problème car le vecteur et la variable `a` partagent la même référence. La solution est d'utiliser une **copie profonde** dans la méthode `set()`.
+
+### 9.c - Méthode get()
+
+```java
+public Rational get(int i) {
+    if (i < 0 || i >= dimension) {
+        throw new IllegalArgumentException("Index " + i + " hors limites [0, " + (dimension-1) + "]");
+    }
+    // Retourne une copie pour éviter la modification externe
+    return new Rational(elements[i].getNumerator(), elements[i].getDenominator());
+}
+```
+
+### 9.d - Programme de test et analyse
+
+```java
+public class TestGet {
+    public static void main(String[] args) {
+        // v ← ⟨1/2, 1/3⟩
+        Rational[] rats = {new Rational(1, 2), new Rational(1, 3)};
+        Vector v = new Vector(rats);
+        
+        // Afficher v
+        System.out.println("v initial: " + v);
+        
+        // a ← v₁ (récupérer la première composante de v)
+        Rational a = v.get(0);
+        
+        // a ← a * 1/3
+        a.mult(new Rational(1, 3));
+        
+        // Afficher v
+        System.out.println("v après modification de a: " + v);
+    }
+}
+```
+
+**Analyse :** Grâce à la copie profonde dans `get()`, la modification de `a` n'affecte pas le vecteur `v`. C'est le comportement souhaité.
+
+## Question 10 - Opérations vectorielles
+
+### 10.a - Multiplication par un scalaire
+
+```java
+public void multiplyByScalar(Rational scalar) {
+    if (scalar == null) {
+        throw new IllegalArgumentException("Le scalaire ne peut pas être null");
+    }
+    
+    for (int i = 0; i < dimension; i++) {
+        elements[i].mult(scalar);
+    }
+}
+```
+
+### 10.b - Addition de vecteurs
+
+```java
+public void add(Vector other) {
+    if (other == null) {
+        throw new IllegalArgumentException("Le vecteur ne peut pas être null");
+    }
+    if (this.dimension != other.dimension) {
+        throw new IllegalArgumentException("Les vecteurs doivent avoir la même dimension");
+    }
+    
+    for (int i = 0; i < dimension; i++) {
+        this.elements[i].add(other.elements[i]);
+    }
+}
+```
+
+## Question 11 - Vecteur de taille dynamique (optionnel)
+
+```java
+public class ExtensibleVector {
+    private Rational[] elements;
+    private int size;
+    private static final int INITIAL_CAPACITY = 10;
+
+    public ExtensibleVector() {
+        this.elements = new Rational[INITIAL_CAPACITY];
+        this.size = 0;
+    }
+
+    public void append(Rational r) {
+        if (r == null) {
+            throw new IllegalArgumentException("Le rationnel ne peut pas être null");
+        }
+        
+        // Si le tableau est plein, on double sa capacité
+        if (size == elements.length) {
+            Rational[] newArray = new Rational[elements.length * 2];
+            System.arraycopy(elements, 0, newArray, 0, size);
+            elements = newArray;
+        }
+        
+        elements[size] = new Rational(r.getNumerator(), r.getDenominator());
+        size++;
+    }
+
+    public Rational get(int i) {
+        if (i < 0 || i >= size) {
+            throw new IllegalArgumentException("Index " + i + " hors limites [0, " + (size-1) + "]");
+        }
+        return new Rational(elements[i].getNumerator(), elements[i].getDenominator());
+    }
+
+    public int getDimension() {
+        return size;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("( ");
+        
+        for (int i = 0; i < size; i++) {
+            sb.append(elements[i].toString());
+            if (i < size - 1) {
+                sb.append(", ");
+            }
+        }
+        
+        sb.append(" )");
+        return sb.toString();
+    }
+}
+```
+
+**Analyse de complexité :**
+- `get(int i)` : O(1) - accès direct
+- `getDimension()` : O(1) - retour d'une variable
+- `append(Rational r)` : O(1) amorti - la plupart du temps c'est O(1), sauf quand il faut redimensionner
+
+## Classe Rational complète (pour référence)
+
+```java
+public class Rational {
+    private int numerator;
+    private int denominator;
+
+    public Rational(int numerator, int denominator) {
+        if (denominator == 0) {
+            throw new IllegalArgumentException("Le dénominateur ne peut pas être zéro");
+        }
+        this.numerator = numerator;
+        this.denominator = denominator;
+        simplify();
+    }
+
+    private void simplify() {
+        int gcd = gcd(Math.abs(numerator), Math.abs(denominator));
+        numerator /= gcd;
+        denominator /= gcd;
+        
+        if (denominator < 0) {
+            numerator = -numerator;
+            denominator = -denominator;
+        }
+    }
+
+    private int gcd(int a, int b) {
+        while (b != 0) {
+            int temp = b;
+            b = a % b;
+            a = temp;
+        }
+        return a;
+    }
+
+    public void mult(Rational other) {
+        this.numerator *= other.numerator;
+        this.denominator *= other.denominator;
+        simplify();
+    }
+
+    public void add(Rational other) {
+        int newDenominator = this.denominator * other.denominator;
+        int newNumerator = this.numerator * other.denominator + other.numerator * this.denominator;
+        this.numerator = newNumerator;
+        this.denominator = newDenominator;
+        simplify();
+    }
+
+    public int getNumerator() { return numerator; }
+    public int getDenominator() { return denominator; }
+
+    @Override
+    public String toString() {
+        return numerator + "/" + denominator;
+    }
+}
+```
+
+Ce code répond à toutes les questions du TP. N'hésite pas si tu as besoin d'explications supplémentaires !
