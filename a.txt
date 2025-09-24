@@ -1,4 +1,4 @@
-Je vais t'aider à réaliser ce TP sur les vecteurs de rationnels en Java. Commençons par créer les classes demandées.
+
 
 ## Question 8 - Classe Vector
 
